@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Prepare
+        run: |
+          sudo apt-get update && sudo apt-get install -y llvm libxml2
+          rustup target add x86_64-apple-darwin
+          rustup target add x86_64-pc-windows-gnu
+          wget https://github.com/qeda/ci/releases/download/compiler/compiler.tar.xz
+          sudo tar -xf compiler.tar.xz -C /
+
+      - name: Clone
+        run: |
+          git clone https://github.com/qeda/qeda-cli.git --depth=1
+          cd qeda-cli
+
+      - name: Build for Linux
+        run: |
+          cd qeda-cli
+          cargo build
+
+      - name: Build for MacOS
+        run: |
+          cd qeda-cli
+          mkdir -p .cargo
+          echo -e "[target.x86_64-apple-darwin]\nlinker = \"x86_64-apple-darwin14-clang\"\nar = \"x86_64-apple-darwin14-ar\"\n" > .cargo/config
+          cargo build --target=x86_64-apple-darwin
+
+      - name: Build for Windows
+        run: |
+          cd qeda-cli
+          cargo build --target=x86_64-pc-windows-gnu
